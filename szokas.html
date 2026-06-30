@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="szokás.">
+<title>szokás.</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: #0F172A; color: #F1F5F9; font-family: -apple-system, 'Inter', sans-serif; min-height: 100vh; }
+  button { font-family: inherit; }
+  input { font-family: inherit; }
+
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  .header { padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-accent { color: #10B981; }
+
+  .nav { display: flex; gap: 4px; background: #1E293B; border-radius: 12px; padding: 4px; }
+  .nav-btn { padding: 8px 16px; border-radius: 9px; border: none; cursor: pointer; background: transparent; color: #64748B; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+  .nav-btn.active { background: #10B981; color: #fff; }
+
+  .main { padding: 20px; flex: 1; }
+
+  .stats-row { display: flex; gap: 12px; margin-bottom: 24px; }
+  .stat-card { flex: 1; background: #1E293B; border-radius: 16px; padding: 16px; }
+  .stat-num { font-size: 28px; font-weight: 800; line-height: 1; }
+  .stat-denom { font-size: 14px; color: #64748B; }
+  .stat-label { font-size: 11px; color: #64748B; margin-top: 4px; font-weight: 500; }
+
+  .section { background: #1E293B; border-radius: 20px; padding: 18px; margin-bottom: 16px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 13px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .habit-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #0F172A; }
+  .habit-row:last-of-type { border-bottom: none; }
+  .habit-emoji { font-size: 20px; flex-shrink: 0; }
+  .habit-name { flex: 1; font-size: 15px; font-weight: 500; }
+  .habit-name.done { text-decoration: line-through; color: #64748B; }
+  .streak-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+
+  .checkbox { width: 28px; height: 28px; border-radius: 8px; border: 2px solid #334155; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .checkbox.checked { border: none; }
+  .checkbox svg { display: none; }
+  .checkbox.checked svg { display: block; }
+
+  .remove-btn { background: none; border: none; color: #334155; cursor: pointer; font-size: 20px; padding: 0 4px; line-height: 1; }
+
+  .add-btn { width: 100%; padding: 12px; background: transparent; border: 2px dashed #334155; border-radius: 12px; color: #475569; font-size: 14px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+  .add-row { display: flex; gap: 8px; margin-top: 12px; }
+  .add-input { flex: 1; background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 10px 14px; color: #F1F5F9; font-size: 14px; outline: none; }
+  .confirm-btn { padding: 10px 16px; background: #10B981; border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; font-size: 14px; }
+  .cancel-btn { padding: 10px 14px; background: #0F172A; border: 1px solid #334155; border-radius: 10px; color: #94A3B8; font-weight: 600; cursor: pointer; font-size: 14px; }
+
+  .week-header-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .week-day-labels { display: flex; gap: 4px; }
+  .day-label { width: 28px; text-align: center; font-size: 11px; color: #475569; font-weight: 600; }
+  .day-label.today { color: #10B981; }
+  .day-num { font-size: 9px; }
+
+  .week-habit-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .week-habit-name { display: flex; align-items: center; gap: 6px; }
+  .week-habit-name span:last-child { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+  .week-checks { display: flex; gap: 4px; }
+
+  .nav-arrow-row { display: flex; align-items: center; gap: 8px; }
+  .nav-arrow { background: #0F172A; border: none; color: #94A3B8; cursor: pointer; padding: 4px 10px; border-radius: 8px; font-size: 18px; font-weight: 700; }
+
+  .month-habit-block { margin-bottom: 20px; }
+  .month-habit-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .month-habit-header .name { font-size: 14px; font-weight: 600; flex: 1; }
+  .month-count { font-size: 12px; color: #475569; }
+  .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .month-cell { aspect-ratio: 1; border-radius: 5px; background: #0F172A; border: none; cursor: pointer; font-size: 10px; font-weight: 700; color: #334155; transition: all 0.2s; }
+  .month-cell.done { color: #fff; }
+  .month-cell.is-today { color: #60A5FA; }
+
+  svg.progress-ring { transform: rotate(-90deg); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="logo">szokás<span class="logo-accent">.</span></div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="setView('daily')">Napi</button>
+      <button class="nav-btn" onclick="setView('weekly')">Heti</button>
+      <button class="nav-btn" onclick="setView('monthly')">Havi</button>
+    </nav>
+  </div>
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card" style="border-top:3px solid #10B981">
+        <div class="stat-num" style="color:#10B981"><span id="stat-today">0</span><span class="stat-denom">/<span id="stat-today-max">0</span></span></div>
+        <div class="stat-label">Ma teljesített</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid #6366F1">
+        <div class="stat-num" style="color:#6366F1"><span id="stat-week">0</span><span class="stat-denom">/<span id="stat-week-max">0</span></span></div>
+        <div class="stat-label">Ezen a héten</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid #F59E0B">
+        <div class="stat-num" style="color:#F59E0B"><span id="stat-month">0</span><span class="stat-denom">/<span id="stat-month-max">0</span></span></div>
+        <div class="stat-label">Ebben a hónapban</div>
+      </div>
+    </div>
+    <div id="view-container"></div>
+  </div>
+</div>
+
+<script>
+const DAYS_HU = ["H","K","Sz","Cs","P","Szo","V"];
+const COLORS = ["#10B981","#6366F1","#F59E0B","#3B82F6","#EC4899","#14B8A6","#F97316"];
+const EMOJIS = ["⭐","🎯","💪","🌿","🔥","✨","🎵"];
+
+let state = {
+  view: 'daily',
+  weekOffset: 0,
+  monthOffset: 0,
+  showAdd: false,
+  habits: [
+    {id:1, name:"Reggeli mozgás", emoji:"🏃", color:"#10B981"},
+    {id:2, name:"Olvasás", emoji:"📚", color:"#6366F1"},
+    {id:3, name:"Meditáció", emoji:"🧘", color:"#F59E0B"},
+    {id:4, name:"Vízivás (2L)", emoji:"💧", color:"#3B82F6"},
+  ],
+  completions: {}
+};
+
+function load() {
+  try {
+    const h = localStorage.getItem('szokas_habits');
+    const c = localStorage.getItem('szokas_completions');
+    if (h) state.habits = JSON.parse(h);
+    if (c) state.completions = JSON.parse(c);
+  } catch(e) {}
+}
+
+function save() {
+  try {
+    localStorage.setItem('szokas_habits', JSON.stringify(state.habits));
+    localStorage.setItem('szokas_completions', JSON.stringify(state.completions));
+  } catch(e) {}
+}
+
+function getToday() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getWeekDates(offset) {
+  const today = new Date();
+  today.setDate(today.getDate() + offset * 7);
+  const day = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((day + 6) % 7));
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+}
+
+function getMonthDates(year, month) {
+  const days = new Date(year, month+1, 0).getDate();
+  return Array.from({length:days}, (_,i) => {
+    const d = new Date(year, month, i+1);
+    return d.toISOString().split('T')[0];
+  });
+}
+
+function isDone(habitId, date) {
+  return !!state.completions[habitId + '__' + date];
+}
+
+function toggle(habitId, date) {
+  const key = habitId + '__' + date;
+  state.completions[key] = !state.completions[key];
+  save();
+  render();
+}
+
+function getStreak(habitId) {
+  let streak = 0;
+  const d = new Date();
+  while(true) {
+    const key = d.toISOString().split('T')[0];
+    if (state.completions[habitId + '__' + key]) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function setView(v) {
+  state.view = v;
+  state.showAdd = false;
+  render();
+}
+
+function addHabit() {
+  const input = document.getElementById('new-habit-input');
+  const name = input ? input.value.trim() : '';
+  if (!name) return;
+  const id = Date.now();
+  const idx = state.habits.length;
+  state.habits.push({id, name, emoji: EMOJIS[idx % EMOJIS.length], color: COLORS[idx % COLORS.length]});
+  save();
+  state.showAdd = false;
+  render();
+}
+
+function removeHabit(id) {
+  state.habits = state.habits.filter(h => h.id !== id);
+  save();
+  render();
+}
+
+function makeCircle(value, max, color, size) {
+  const pct = max === 0 ? 0 : Math.round((value/max)*100);
+  const r = (size-12)/2;
+  const circ = 2*Math.PI*r;
+  const dash = (pct/100)*circ;
+  return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#0F172A" stroke-width="8"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="8"
+      stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
+    <text x="${size/2}" y="${size/2+5}" text-anchor="middle" fill="#F1F5F9" font-size="12" font-weight="700" style="transform:rotate(90deg) translate(0,-${size}px)"></text>
+  </svg><div style="font-size:11px;color:#64748B;text-align:center;margin-top:2px">${pct}%</div>`;
+}
+
+function makeCheckbox(habitId, date, color) {
+  const done = isDone(habitId, date);
+  const shadow = done ? `box-shadow:0 0 10px ${color}55;` : '';
+  const bg = done ? `background:${color};border:none;` : 'background:transparent;border:2px solid #334155;';
+  const check = done ? `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : '';
+  return `<button class="checkbox${done?' checked':''}" style="${bg}${shadow}" onclick="toggle(${habitId},'${date}')">${check}</button>`;
+}
+
+function renderDaily() {
+  const today = getToday();
+  const dateStr = new Date().toLocaleDateString('hu-HU', {weekday:'long', month:'long', day:'numeric'});
+  let rows = state.habits.map(h => {
+    const done = isDone(h.id, today);
+    const streak = getStreak(h.id);
+    const streakBadge = streak >= 2 ? `<span class="streak-badge" style="color:${h.color};background:${h.color}22">🔥 ${streak} nap</span>` : '';
+    return `<div class="habit-row">
+      <span class="habit-emoji">${h.emoji}</span>
+      <span class="habit-name${done?' done':''}">${h.name}</span>
+      ${streakBadge}
+      ${makeCheckbox(h.id, today, h.color)}
+      <button class="remove-btn" onclick="removeHabit(${h.id})">×</button>
+    </div>`;
+  }).join('');
+
+  const addSection = state.showAdd
+    ? `<div class="add-row">
+        <input class="add-input" id="new-habit-input" placeholder="Szokás neve..." onkeydown="if(event.key==='Enter')addHabit()" autofocus>
+        <button class="confirm-btn" onclick="addHabit()">Hozzáad</button>
+        <button class="cancel-btn" onclick="state.showAdd=false;render()">Mégse</button>
+       </div>`
+    : `<button class="add-btn" onclick="state.showAdd=true;render()">+ Új szokás hozzáadása</button>`;
+
+  return `<div class="section">
+    <div class="section-header">
+      <div style="font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.05em">${dateStr}</div>
+      <div style="display:flex;flex-direction:column;align-items:center">${makeCircle(state.habits.filter(h=>isDone(h.id,today)).length, state.habits.length, '#10B981', 54)}</div>
+    </div>
+    ${rows}
+    ${addSection}
+  </div>`;
+}
+
+function renderWeekly() {
+  const today = getToday();
+  const weekDates = getWeekDates(state.weekOffset);
+  const weekDone = weekDates.reduce((acc,d) => acc + state.habits.filter(h=>isDone(h.id,d)).length, 0);
+  const weekTotal = state.habits.length * 7;
+  const label = state.weekOffset === 0 ? 'Ez a hét' : state.weekOffset === -1 ? 'Előző hét' : `${state.weekOffset > 0 ? '+':''}${state.weekOffset} hét`;
+
+  const dayLabels = weekDates.map((d,i) => {
+    const isT = d === today;
+    return `<div class="day-label${isT?' today':''}">
+      ${DAYS_HU[i]}<div class="day-num">${new Date(d).getDate()}</div>
+    </div>`;
+  }).join('');
+
+  const habitRows = state.habits.map(h => {
+    const checks = weekDates.map(d => makeCheckbox(h.id, d, h.color)).join('');
+    return `<div class="week-habit-row">
+      <div class="week-habit-name"><span>${h.emoji}</span><span>${h.name}</span></div>
+      <div class="week-checks">${checks}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="section">
+    <div class="section-header">
+      <div class="nav-arrow-row">
+        <button class="nav-arrow" onclick="state.weekOffset--;render()">‹</button>
+        <div class="section-title">${label}</div>
+        <button class="nav-arrow" onclick="state.weekOffset++;render()">›</button>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center">${makeCircle(weekDone, weekTotal, '#6366F1', 54)}</div>
+    </div>
+    <div class="week-header-row">
+      <div></div>
+      <div class="week-day-labels">${dayLabels}</div>
+    </div>
+    ${habitRows}
+  </div>`;
+}
+
+function renderMonthly() {
+  const today = getToday();
+  const now = new Date();
+  now.setMonth(now.getMonth() + state.monthOffset);
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthDates = getMonthDates(year, month);
+  const monthDone = monthDates.reduce((acc,d) => acc + state.habits.filter(h=>isDone(h.id,d)).length, 0);
+  const monthTotal = state.habits.length * monthDates.length;
+  const monthLabel = now.toLocaleDateString('hu-HU', {year:'numeric', month:'long'});
+
+  const firstDow = new Date(year, month, 1).getDay();
+  const startPad = (firstDow + 6) % 7;
+
+  const habitBlocks = state.habits.map(h => {
+    const hDone = monthDates.filter(d => isDone(h.id, d)).length;
+    const pct = Math.round((hDone / monthDates.length) * 100);
+    const pads = Array(startPad).fill('<div></div>').join('');
+    const cells = monthDates.map(d => {
+      const done = isDone(h.id, d);
+      const isT = d === today;
+      const bg = done ? h.color : isT ? '#1E3A5F' : '#0F172A';
+      const col = done ? '#fff' : isT ? '#60A5FA' : '#334155';
+      const border = isT ? `border:1px solid ${h.color};` : '';
+      return `<button class="month-cell${done?' done':''}${isT?' is-today':''}" style="background:${bg};color:${col};${border}" onclick="toggle(${h.id},'${d}')">${new Date(d).getDate()}</button>`;
+    }).join('');
+    return `<div class="month-habit-block">
+      <div class="month-habit-header">
+        <span>${h.emoji}</span>
+        <span class="name">${h.name}</span>
+        <span class="streak-badge" style="color:${h.color};background:${h.color}22">${pct}%</span>
+        <span class="month-count">${hDone}/${monthDates.length} nap</span>
+      </div>
+      <div class="month-grid">${pads}${cells}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="section">
+    <div class="section-header">
+      <div class="nav-arrow-row">
+        <button class="nav-arrow" onclick="state.monthOffset--;render()">‹</button>
+        <div class="section-title">${monthLabel}</div>
+        <button class="nav-arrow" onclick="state.monthOffset++;render()">›</button>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center">${makeCircle(monthDone, monthTotal, '#F59E0B', 54)}</div>
+    </div>
+    ${habitBlocks}
+  </div>`;
+}
+
+function updateStats() {
+  const today = getToday();
+  const todayDone = state.habits.filter(h => isDone(h.id, today)).length;
+  document.getElementById('stat-today').textContent = todayDone;
+  document.getElementById('stat-today-max').textContent = state.habits.length;
+
+  const weekDates = getWeekDates(0);
+  const weekDone = weekDates.reduce((acc,d) => acc + state.habits.filter(h=>isDone(h.id,d)).length, 0);
+  document.getElementById('stat-week').textContent = weekDone;
+  document.getElementById('stat-week-max').textContent = state.habits.length * 7;
+
+  const now = new Date();
+  const monthDates = getMonthDates(now.getFullYear(), now.getMonth());
+  const monthDone = monthDates.reduce((acc,d) => acc + state.habits.filter(h=>isDone(h.id,d)).length, 0);
+  document.getElementById('stat-month').textContent = monthDone;
+  document.getElementById('stat-month-max').textContent = state.habits.length * monthDates.length;
+}
+
+function render() {
+  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+    const views = ['daily','weekly','monthly'];
+    btn.classList.toggle('active', views[i] === state.view);
+  });
+
+  const container = document.getElementById('view-container');
+  if (state.view === 'daily') container.innerHTML = renderDaily();
+  else if (state.view === 'weekly') container.innerHTML = renderWeekly();
+  else container.innerHTML = renderMonthly();
+
+  updateStats();
+
+  if (state.showAdd) {
+    const inp = document.getElementById('new-habit-input');
+    if (inp) inp.focus();
+  }
+}
+
+load();
+render();
+</script>
+</body>
+</html>
